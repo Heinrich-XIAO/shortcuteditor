@@ -20,16 +20,14 @@ export const ShortcutSchema = z.object({
 export const WebSubURLShortcutSchema = z.object({
   uuid: z.string().uuid("Invalid UUID format").optional(),
   hrefRegex: z.string().min(1, "URL regex pattern is required"),
-  shortcuts: z.array(ShortcutSchema).min(1, "At least one shortcut is required"),
+  shortcuts: z.array(ShortcutSchema), // Remove .min(1) constraint
   scrollBoxIdentifier: z.string(),
 });
 
 // Define schema for Redis connection
 export const RedisConnectionSchema = z.object({
-  host: z.string().min(1, "Host is required"),
-  port: z.string().transform(val => parseInt(val, 10)),
-  password: z.string().optional(),
-  username: z.string().optional(),
+  url: z.string().min(1, "Host is required"),
+  token: z.string().optional(),
 });
 
 // Type inference

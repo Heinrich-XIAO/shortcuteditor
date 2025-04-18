@@ -1,157 +1,144 @@
 import { NextRequest, NextResponse } from "next/server";
-import Redis from "ioredis";
+import { Redis } from '@upstash/redis';
+import JSON5 from 'json5';
+import { WebSubURLShortcut } from "@/lib/types";
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const { credentials, action, data } = await request.json();
-    
+    const { action, data } = await request.json();
+
     // Validate required fields
-    if (!credentials || !action) {
+    if (!action) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
-    
+
     // Create Redis client
+    // Read from ENV
     const redis = new Redis({
-      host: credentials.host,
-      port: credentials.port,
-      username: credentials.username || undefined,
-      password: credentials.password || undefined,
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN
     });
-    
+
     // Test the connection
     try {
       await redis.ping();
     } catch (error) {
-      await redis.disconnect();
       return NextResponse.json(
         { error: "Failed to connect to Redis server" },
         { status: 500 }
       );
     }
-    
+
     let result;
     const listKey = "shortcuts";
-    
+
     switch (action) {
       case "test":
         result = { success: true, message: "Connected to Redis successfully" };
         break;
-        
+
       case "get":
         const shortcuts = await redis.lrange(listKey, 0, -1);
         result = {
           shortcuts: shortcuts.map(item => {
             try {
-              return JSON.parse(item);
+              return JSON5.parse(item);
             } catch (e) {
               return item;
             }
           })
         };
         break;
-        
+
       case "save":
         if (!data) {
-          await redis.disconnect();
           return NextResponse.json(
             { error: "No data provided for save action" },
             { status: 400 }
           );
         }
-        
-        // Save to Redis as a list item
-        const jsonData = JSON.stringify(data);
-        await redis.rpush(listKey, jsonData);
+
+        // Save to Redis using atomic operation
+        await redis.lpush(listKey, JSON5.stringify(data));
         result = { success: true, message: "Shortcut saved to Redis" };
         break;
-        
+
       case "update":
-        if (!data || !data.uuid) {
-          await redis.disconnect();
+        if (!data?.uuid) {
           return NextResponse.json(
             { error: "Invalid data for update action" },
             { status: 400 }
           );
         }
-        
-        // Get all items from the list
+
+        // Atomic update operation using transaction
+        const pipeline = redis.pipeline();
         const items = await redis.lrange(listKey, 0, -1);
+        // Flag to check if update operation is queued
         let updated = false;
-        
-        // Find the item with matching UUID and update it
         for (let i = 0; i < items.length; i++) {
           try {
-            const item = JSON.parse(items[i]);
+            const item = JSON5.parse(items[i].toString());
             if (item.uuid === data.uuid) {
-              // Replace the item
-              await redis.lset(listKey, i, JSON.stringify(data));
+              pipeline.lset(listKey, i, JSON5.stringify(data));
               updated = true;
               break;
             }
           } catch (e) {
-            // Skip invalid JSON items
             continue;
           }
         }
-        
-        if (updated) {
-          result = { success: true, message: "Shortcut updated in Redis" };
-        } else {
-          result = { success: false, message: "Shortcut not found for update" };
+        if (!updated) {
+          return NextResponse.json(
+            { error: "Shortcut not found" },
+            { status: 404 }
+          );
         }
+        const [updateError] = await pipeline.exec();
+        result = {
+          success: !updateError,
+          message: !updateError ? "Shortcut updated in Redis" : "Failed to update shortcut"
+        };
         break;
-        
+
       case "delete":
-        if (!data || !data.uuid) {
-          await redis.disconnect();
+        if (!data?.uuid) {
           return NextResponse.json(
             { error: "UUID required for delete action" },
             { status: 400 }
           );
         }
-        
-        // Get all items from the list
+
+        // Find and remove the item with matching UUID using pipeline
         const allItems = await redis.lrange(listKey, 0, -1);
-        let deleted = false;
-        
-        // Iterate through list to find and remove the item with matching UUID
-        for (let i = 0; i < allItems.length; i++) {
+        const targetItem = allItems.find(item => {
           try {
-            const item = JSON.parse(allItems[i]);
-            if (item.uuid === data.uuid) {
-              // Remove this item
-              await redis.lrem(listKey, 1, allItems[i]);
-              deleted = true;
-              break;
-            }
-          } catch (e) {
-            // Skip invalid JSON items
-            continue;
+            return JSON5.parse(item).uuid === data.uuid;
+          } catch {
+            return false;
           }
-        }
-        
-        result = { 
-          success: deleted, 
-          message: deleted ? "Shortcut deleted from Redis" : "Shortcut not found" 
+        });
+
+        const deleted = targetItem ? 
+          await redis.lrem(listKey, 1, targetItem) > 0 : false;
+
+        result = {
+          success: deleted,
+          message: deleted ? "Shortcut deleted from Redis" : "Shortcut not found"
         };
         break;
-        
+
       default:
-        await redis.disconnect();
         return NextResponse.json(
           { error: "Invalid action" },
           { status: 400 }
         );
     }
-    
-    // Close Redis connection
-    await redis.disconnect();
-    
     return NextResponse.json(result);
   } catch (error) {
     console.error("Redis API error:", error);

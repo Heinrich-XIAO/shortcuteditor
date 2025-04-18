@@ -25,13 +25,10 @@ export default function Home() {
   const [editingShortcut, setEditingShortcut] = useState<WebSubURLShortcut | null>(null);
   const [activeTab, setActiveTab] = useState<string>("create");
   const [isRedisConnected, setIsRedisConnected] = useState<boolean>(false);
-  const [redisCredentials, setRedisCredentials] = useState<RedisConnectionSchemaType | null>(null);
 
   // Load shortcuts from Redis if connected
   useEffect(() => {
     const fetchRedisShortcuts = async () => {
-      if (!redisCredentials) return;
-      
       try {
         const response = await fetch("/api/redis", {
           method: "POST",
@@ -39,7 +36,6 @@ export default function Home() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            credentials: redisCredentials,
             action: "get",
           }),
         });
@@ -65,31 +61,28 @@ export default function Home() {
     };
     
     if (isRedisConnected) {
+      console.log("Fetching shortcuts from Redis...");
       fetchRedisShortcuts();
     }
-  }, [isRedisConnected, redisCredentials, toast]);
+  }, [isRedisConnected]); // modified dependency array to only include isRedisConnected
 
   const handleSaveShortcut = async (shortcut: WebSubURLShortcut) => {
     try {
-      // Check if we're editing an existing shortcut
       const isEditing = shortcuts.some((s) => s.uuid === shortcut.uuid);
       
       if (isEditing) {
-        // Update existing shortcut
         const updatedShortcuts = shortcuts.map((s) =>
           s.uuid === shortcut.uuid ? shortcut : s
         );
         setShortcuts(updatedShortcuts);
         
-        // Update in Redis if connected
-        if (isRedisConnected && redisCredentials) {
+        if (isRedisConnected) {
           await fetch("/api/redis", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              credentials: redisCredentials,
               action: "update",
               data: shortcut,
             }),
@@ -101,19 +94,16 @@ export default function Home() {
           description: "Shortcut updated successfully",
         });
       } else {
-        // Add new shortcut
         const newShortcuts = [...shortcuts, shortcut];
         setShortcuts(newShortcuts);
         
-        // Save to Redis if connected
-        if (isRedisConnected && redisCredentials) {
+        if (isRedisConnected) {
           await fetch("/api/redis", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              credentials: redisCredentials,
               action: "save",
               data: shortcut,
             }),
@@ -126,11 +116,8 @@ export default function Home() {
         });
       }
       
-      // Reset editing state
       setEditingShortcut(null);
       setActiveTab("list");
-      
-      // Set as selected for preview
       setSelectedShortcut(shortcut);
     } catch (error) {
       toast({
@@ -151,25 +138,18 @@ export default function Home() {
       // Delete from local state
       const updatedShortcuts = shortcuts.filter((s) => s.uuid !== uuid);
       setShortcuts(updatedShortcuts);
-      
-      // Delete from Redis if connected
-      if (isRedisConnected && redisCredentials) {
+
+      if (isRedisConnected) {
         await fetch("/api/redis", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            credentials: redisCredentials,
             action: "delete",
             data: { uuid },
           }),
         });
-      }
-      
-      // Clear selected if it's the one being deleted
-      if (selectedShortcut?.uuid === uuid) {
-        setSelectedShortcut(null);
       }
       
       toast({
@@ -198,7 +178,7 @@ export default function Home() {
     });
   };
 
-  const handleConnectToRedis = async (credentials: RedisConnectionSchemaType) => {
+  const handleConnectToRedis = async () => {
     try {
       const response = await fetch("/api/redis", {
         method: "POST",
@@ -206,7 +186,6 @@ export default function Home() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          credentials,
           action: "test",
         }),
       });
@@ -215,7 +194,6 @@ export default function Home() {
       
       if (response.ok && data.success) {
         setIsRedisConnected(true);
-        setRedisCredentials(credentials);
         
         toast({
           title: "Connected",

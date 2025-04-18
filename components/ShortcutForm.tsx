@@ -122,7 +122,7 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
                       type="button"
                       variant="ghost"
                       size="icon"
-                      onClick={() => remove(index)}
+                      onClick={() => {remove(index); console.log("Shortcut removed");}}
                       className="absolute right-2 top-2 text-muted-foreground hover:text-destructive"
                     >
                       <XCircle className="h-5 w-5" />
