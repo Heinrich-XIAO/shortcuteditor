@@ -14,13 +14,12 @@ import { RedisConnectionForm } from "@/components/RedisConnectionForm";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { WebSubURLShortcut } from "@/lib/types";
 import { RedisConnectionSchemaType } from "@/lib/schema";
 
 export default function Home() {
   const { toast } = useToast();
-  const [shortcuts, setShortcuts] = useLocalStorage<WebSubURLShortcut[]>("shortcuts", []);
+  const [shortcuts, setShortcuts] = useState<WebSubURLShortcut[]>([]);
   const [selectedShortcut, setSelectedShortcut] = useState<WebSubURLShortcut | null>(null);
   const [editingShortcut, setEditingShortcut] = useState<WebSubURLShortcut | null>(null);
   const [activeTab, setActiveTab] = useState<string>("create");
@@ -197,7 +196,7 @@ export default function Home() {
         
         toast({
           title: "Connected",
-          description: "Successfully connected to Redis server",
+          description: "Connected to database",
         });
       } else {
         throw new Error(data.error || "Failed to connect to Redis");
@@ -211,6 +210,11 @@ export default function Home() {
     }
   };
 
+  // Auto-connect to Redis on mount
+  useEffect(() => {
+    handleConnectToRedis();
+  }, []);
+
   return (
     <div className="min-h-screen">
       <header className="border-b">
@@ -221,10 +225,6 @@ export default function Home() {
           </div>
           <div className="flex items-center space-x-3">
             <ImportExport shortcuts={shortcuts} onImport={handleImportShortcuts} />
-            <RedisConnectionForm
-              onConnect={handleConnectToRedis}
-              isConnected={isRedisConnected}
-            />
             <ThemeToggle />
           </div>
         </div>

@@ -46,7 +46,7 @@ export function RedisConnectionForm({
       onClick={handleSubmit}
     >
       <Database className="h-4 w-4" />
-      <span>{isConnected ? "Connected to Redis" : "Connect to Redis"}</span>
+      <span>{isConnected ? "Connected to database" : "Connect to database"}</span>
     </Button>
   );
 }
