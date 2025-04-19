@@ -22,6 +22,7 @@ export const WebSubURLShortcutSchema = z.object({
   hrefRegex: z.string().min(1, "URL regex pattern is required"),
   shortcuts: z.array(ShortcutSchema), // Remove .min(1) constraint
   scrollBoxIdentifier: z.string(),
+	userId: z.string(),
 });
 
 // Define schema for Redis connection

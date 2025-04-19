@@ -5,18 +5,13 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { Toaster } from "@/components/ui/toaster";
 import {
   ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
 } from '@clerk/nextjs';
 import {dark} from '@clerk/themes';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'WebSubURL Shortcut Manager',
+  title: 'Shortcutthing',
   description: 'Create and manage web shortcuts with ease',
 };
 

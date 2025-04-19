@@ -1,9 +1,10 @@
-"use client";
+"use client"
 
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusCircle, XCircle, Copy, Key, Save } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@clerk/nextjs";
 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,8 +23,20 @@ interface ShortcutFormProps {
 }
 
 export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormProps) {
-  const defaultValues = initialData || getDefaultShortcut();
-  
+  const { isLoaded, isSignedIn, userId } = useAuth();
+
+  if (!isLoaded) {
+    return <div>Loading...</div>;
+  }
+
+  if (!isSignedIn) {
+    return <div>Sign in to configure shortcuts</div>;
+  }
+
+  const defaultValues = initialData
+    ? { ...initialData, userId } // Ajout de l'identifiant utilisateur par défaut
+    : { ...getDefaultShortcut(), userId };
+
   const form = useForm({
     resolver: zodResolver(WebSubURLShortcutSchema),
     defaultValues,
@@ -35,10 +48,12 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
   });
 
   const handleSubmit = (data: WebSubURLShortcut) => {
+    console.log("Form submitted with data:", data); // Ajout d'un log pour vérifier l'appel
     // Ensure UUID exists (it should be optional in the schema but required in the app)
     const finalData = {
       ...data,
       uuid: data.uuid || generateUUID(),
+      userId, // Ajout de l'identifiant utilisateur dans les données finales
     };
     onSubmit(finalData);
   };
@@ -59,7 +74,10 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+      <form 
+        onSubmit={form.handleSubmit(handleSubmit)}
+        className="space-y-6"
+      >
         <Card className="w-full">
           <CardHeader>
             <CardTitle>Shortcut Configuration</CardTitle>
@@ -72,7 +90,7 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
                 <FormItem>
                   <FormLabel>URL Regex Pattern</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., ^https://example.com/.*" {...field} />
+                    <Input placeholder="e.g., https://example.com/.*" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

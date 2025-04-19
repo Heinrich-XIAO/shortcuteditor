@@ -10,6 +10,7 @@ import {
   SignedIn,
   SignedOut,
   UserButton,
+	useAuth,
 } from '@clerk/nextjs'
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ShortcutForm } from "@/components/ShortcutForm";
@@ -19,17 +20,16 @@ import { ImportExport } from "@/components/ImportExport";
 import { RedisConnectionForm } from "@/components/RedisConnectionForm";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { WebSubURLShortcut } from "@/lib/types";
-import { RedisConnectionSchemaType } from "@/lib/schema";
 
 export default function Home() {
   const { toast } = useToast();
   const [shortcuts, setShortcuts] = useState<WebSubURLShortcut[]>([]);
   const [selectedShortcut, setSelectedShortcut] = useState<WebSubURLShortcut | null>(null);
   const [editingShortcut, setEditingShortcut] = useState<WebSubURLShortcut | null>(null);
-  const [activeTab, setActiveTab] = useState<string>("create");
+  const [activeTab, setActiveTab] = useState<string>("list");
   const [isRedisConnected, setIsRedisConnected] = useState<boolean>(false);
+	const { userId, isSignedIn, isLoaded } = useAuth();
 
   // Load shortcuts from Redis if connected
   useEffect(() => {
@@ -73,6 +73,7 @@ export default function Home() {
 
   const handleSaveShortcut = async (shortcut: WebSubURLShortcut) => {
     try {
+			console.log(shortcut);
       const isEditing = shortcuts.some((s) => s.uuid === shortcut.uuid);
       
       if (isEditing) {
@@ -218,8 +219,14 @@ export default function Home() {
 
   // Auto-connect to Redis on mount
   useEffect(() => {
-    handleConnectToRedis();
-  }, []);
+		if (isLoaded) {
+			if (isSignedIn) {
+				handleConnectToRedis();
+			} else {
+				setIsRedisConnected(false);
+			}
+		}
+  }, [isLoaded]);
 
   return (
     <div className="min-h-screen">
@@ -256,11 +263,11 @@ export default function Home() {
 							<Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
 								<div className="flex justify-between items-center mb-4">
 									<TabsList>
+										<TabsTrigger value="list">My Shortcuts</TabsTrigger>
 										<TabsTrigger value="create" className="flex items-center gap-1">
 											<PlusCircle className="h-4 w-4" />
 											<span>{editingShortcut ? "Edit" : "Create"}</span>
 										</TabsTrigger>
-										<TabsTrigger value="list">My Shortcuts</TabsTrigger>
 									</TabsList>
 									{activeTab === "list" && (
 										<Button 
