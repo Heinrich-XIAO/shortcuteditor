@@ -8,6 +8,7 @@ export interface Shortcut {
   key: string;
   uniqueIdentifier: string;
   isRelativeToScrollItem: boolean;
+  mustBeVisible: boolean;
 }
 
 export interface WebSubURLShortcut {

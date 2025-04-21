@@ -14,6 +14,7 @@ export const ShortcutSchema = z.object({
   key: z.string().min(1, "Key is required"),
   uniqueIdentifier: z.string().min(1, "Unique identifier is required"),
   isRelativeToScrollItem: z.boolean().default(false),
+  mustBeVisible: z.boolean().default(false), // Ajout de mustBeVisible
 });
 
 // Define schema for the entire WebSubURLShortcut

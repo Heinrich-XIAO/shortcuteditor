@@ -69,7 +69,8 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
       },
       key: "",
       uniqueIdentifier: "",
-      isRelativeToScrollItem: false,
+      isRelativeToScrollItem: true,
+      mustBeVisible: false,
     });
   };
 
@@ -282,6 +283,22 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
                                         />
                                       </FormControl>
                                       <FormLabel className="cursor-pointer">Relative to Scroll Item</FormLabel>
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name={`shortcuts.${index}.mustBeVisible`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex items-center space-x-2">
+                                      <FormControl>
+                                        <Checkbox 
+                                          checked={field.value} 
+                                          onCheckedChange={field.onChange} 
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="cursor-pointer">Must be Visible</FormLabel>
                                     </FormItem>
                                   )}
                                 />
