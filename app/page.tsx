@@ -234,7 +234,7 @@ export default function Home() {
         <div className="container mx-auto py-4 px-4 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <ScanText className="h-6 w-6" />
-            <h1 className="text-xl font-bold">WebSubURL Shortcut Manager</h1>
+						<h1 className="text-xl font-bold"><span className="text-blue-500">shortcut</span><span className="text-red-500">thing</span></h1>
           </div>
           <div className="flex items-center space-x-3">
             <ImportExport shortcuts={shortcuts} onImport={handleImportShortcuts} />
