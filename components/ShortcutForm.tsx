@@ -156,7 +156,7 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                className="p-4 border rounded-lg relative"
+                                className="p-4 border rounded-lg relative bg-black"
                               >
                                 <Button
                                   type="button"
