@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { PlusCircle, XCircle, Copy, Key, Save } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@clerk/nextjs";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -72,6 +73,19 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
     });
   };
 
+  const onDragEnd = (result: any) => {
+    const { source, destination } = result;
+
+    console.log("Drag result:", result); // Ajout d'un log pour vérifier le résultat du drag
+    if (!destination) return;
+    if (source.index === destination.index) return; // Aucun changement si la position est identique
+
+    const shortcuts = Array.from(form.getValues("shortcuts"));
+    const [moved] = shortcuts.splice(source.index, 1);
+    shortcuts.splice(destination.index, 0, moved);
+    form.setValue("shortcuts", shortcuts);
+  };
+
   return (
     <Form {...form}>
       <form 
@@ -127,144 +141,159 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
               </div>
               
               <div className="space-y-4">
-                {fields.map((field, index) => (
-                  <motion.div
-                    key={field.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.2 }}
-                    className="p-4 border rounded-lg relative"
-                  >
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {remove(index); console.log("Shortcut removed");}}
-                      className="absolute right-2 top-2 text-muted-foreground hover:text-destructive"
-                    >
-                      <XCircle className="h-5 w-5" />
-                    </Button>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <FormField
-                        control={form.control}
-                        name={`shortcuts.${index}.key`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Key</FormLabel>
-                            <FormControl>
-                              <div className="relative">
-                                <Key className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                <Input className="pl-8" placeholder="e.g., j, k, Enter" {...field} />
+                <DragDropContext onDragEnd={onDragEnd}>
+                  <Droppable droppableId="shortcuts">
+                    {(provided) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        className="space-y-4"
+                      >
+                        {fields.map((field, index) => (
+                          <Draggable key={field.id} draggableId={field.id} index={index}>
+                            {(provided) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className="p-4 border rounded-lg relative"
+                              >
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {remove(index); console.log("Shortcut removed");}}
+                                  className="absolute right-2 top-2 text-muted-foreground hover:text-destructive"
+                                >
+                                  <XCircle className="h-5 w-5" />
+                                </Button>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                  <FormField
+                                    control={form.control}
+                                    name={`shortcuts.${index}.key`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Key</FormLabel>
+                                        <FormControl>
+                                          <div className="relative">
+                                            <Key className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                            <Input className="pl-8" placeholder="e.g., j, k, Enter" {...field} />
+                                          </div>
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                  
+                                  <FormField
+                                    control={form.control}
+                                    name={`shortcuts.${index}.uniqueIdentifier`}
+                                    render={({ field }) => (
+                                      <FormItem>
+                                        <FormLabel>Unique Identifier</FormLabel>
+                                        <FormControl>
+                                          <Input placeholder="Identifier for this shortcut" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                      </FormItem>
+                                    )}
+                                  />
+                                </div>
+                                
+                                <div className="space-y-2">
+                                  <Label>Modifier Keys</Label>
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                    <FormField
+                                      control={form.control}
+                                      name={`shortcuts.${index}.isModifiers.isControl`}
+                                      render={({ field }) => (
+                                        <FormItem className="flex items-center space-x-2">
+                                          <FormControl>
+                                            <Checkbox 
+                                              checked={field.value} 
+                                              onCheckedChange={field.onChange} 
+                                            />
+                                          </FormControl>
+                                          <FormLabel className="cursor-pointer">Control</FormLabel>
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name={`shortcuts.${index}.isModifiers.isShift`}
+                                      render={({ field }) => (
+                                        <FormItem className="flex items-center space-x-2">
+                                          <FormControl>
+                                            <Checkbox 
+                                              checked={field.value} 
+                                              onCheckedChange={field.onChange} 
+                                            />
+                                          </FormControl>
+                                          <FormLabel className="cursor-pointer">Shift</FormLabel>
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name={`shortcuts.${index}.isModifiers.isAlt`}
+                                      render={({ field }) => (
+                                        <FormItem className="flex items-center space-x-2">
+                                          <FormControl>
+                                            <Checkbox 
+                                              checked={field.value} 
+                                              onCheckedChange={field.onChange} 
+                                            />
+                                          </FormControl>
+                                          <FormLabel className="cursor-pointer">Alt</FormLabel>
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={form.control}
+                                      name={`shortcuts.${index}.isModifiers.isMeta`}
+                                      render={({ field }) => (
+                                        <FormItem className="flex items-center space-x-2">
+                                          <FormControl>
+                                            <Checkbox 
+                                              checked={field.value} 
+                                              onCheckedChange={field.onChange} 
+                                            />
+                                          </FormControl>
+                                          <FormLabel className="cursor-pointer">Meta</FormLabel>
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                                
+                                <FormField
+                                  control={form.control}
+                                  name={`shortcuts.${index}.isRelativeToScrollItem`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex items-center space-x-2 mt-4">
+                                      <FormControl>
+                                        <Checkbox 
+                                          checked={field.value} 
+                                          onCheckedChange={field.onChange} 
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="cursor-pointer">Relative to Scroll Item</FormLabel>
+                                    </FormItem>
+                                  )}
+                                />
                               </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name={`shortcuts.${index}.uniqueIdentifier`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Unique Identifier</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Identifier for this shortcut" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label>Modifier Keys</Label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <FormField
-                          control={form.control}
-                          name={`shortcuts.${index}.isModifiers.isControl`}
-                          render={({ field }) => (
-                            <FormItem className="flex items-center space-x-2">
-                              <FormControl>
-                                <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange} 
-                                />
-                              </FormControl>
-                              <FormLabel className="cursor-pointer">Control</FormLabel>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name={`shortcuts.${index}.isModifiers.isShift`}
-                          render={({ field }) => (
-                            <FormItem className="flex items-center space-x-2">
-                              <FormControl>
-                                <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange} 
-                                />
-                              </FormControl>
-                              <FormLabel className="cursor-pointer">Shift</FormLabel>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name={`shortcuts.${index}.isModifiers.isAlt`}
-                          render={({ field }) => (
-                            <FormItem className="flex items-center space-x-2">
-                              <FormControl>
-                                <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange} 
-                                />
-                              </FormControl>
-                              <FormLabel className="cursor-pointer">Alt</FormLabel>
-                            </FormItem>
-                          )}
-                        />
-                        
-                        <FormField
-                          control={form.control}
-                          name={`shortcuts.${index}.isModifiers.isMeta`}
-                          render={({ field }) => (
-                            <FormItem className="flex items-center space-x-2">
-                              <FormControl>
-                                <Checkbox 
-                                  checked={field.value} 
-                                  onCheckedChange={field.onChange} 
-                                />
-                              </FormControl>
-                              <FormLabel className="cursor-pointer">Meta</FormLabel>
-                            </FormItem>
-                          )}
-                        />
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
                       </div>
-                    </div>
-                    
-                    <FormField
-                      control={form.control}
-                      name={`shortcuts.${index}.isRelativeToScrollItem`}
-                      render={({ field }) => (
-                        <FormItem className="flex items-center space-x-2 mt-4">
-                          <FormControl>
-                            <Checkbox 
-                              checked={field.value} 
-                              onCheckedChange={field.onChange} 
-                            />
-                          </FormControl>
-                          <FormLabel className="cursor-pointer">Relative to Scroll Item</FormLabel>
-                        </FormItem>
-                      )}
-                    />
-                  </motion.div>
-                ))}
+                    )}
+                  </Droppable>
+                </DragDropContext>
                 
                 {fields.length === 0 && (
                   <div className="text-center p-4 border border-dashed rounded-lg">
