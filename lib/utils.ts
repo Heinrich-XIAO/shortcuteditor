@@ -39,9 +39,11 @@ export function getDefaultShortcut(): WebSubURLShortcut {
         key: "",
         uniqueIdentifier: "",
         isRelativeToScrollItem: false,
+        mustBeVisible: false,
       },
     ],
     scrollBoxIdentifier: "",
+    userId: "",
   };
 }
 

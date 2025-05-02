@@ -15,7 +15,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       setStoredValue(item ? JSON.parse(item) : initialValue);
     } catch (error) {
       console.log(error);
-      return initialValue;
+      // Ne rien retourner ici, juste log l'erreur
     }
   }, [key, initialValue]);
 

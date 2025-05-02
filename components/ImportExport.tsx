@@ -63,7 +63,7 @@ export function ImportExport({ shortcuts, onImport }: ImportExportProps) {
         return result.data;
       });
       
-      onImport(validated);
+      onImport(validated as WebSubURLShortcut[]);
       setImportOpen(false);
       setImportData("");
     } catch (error) {
