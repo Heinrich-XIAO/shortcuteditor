@@ -51,7 +51,7 @@ export default function Home() {
           setShortcuts(data.shortcuts);
           toast({
             title: "Success",
-            description: "Shortcuts loaded from Redis",
+            description: "Shortcuts loaded",
           });
         } else {
           throw new Error(data.error || "Failed to load shortcuts from Redis");
@@ -59,7 +59,7 @@ export default function Home() {
       } catch (error) {
         toast({
           title: "Error",
-          description: error instanceof Error ? error.message : "Failed to load shortcuts from Redis",
+          description: error instanceof Error ? error.message : "Failed to load shortcuts",
           variant: "destructive",
         });
       }
@@ -206,12 +206,12 @@ export default function Home() {
           description: "Connected to database",
         });
       } else {
-        throw new Error(data.error || "Failed to connect to Redis");
+        throw new Error(data.error);
       }
     } catch (error) {
       toast({
         title: "Connection Error",
-        description: error instanceof Error ? error.message : "Failed to connect to Redis",
+        description: '',
         variant: "destructive",
       });
     }
