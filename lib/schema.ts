@@ -24,6 +24,7 @@ export const WebSubURLShortcutSchema = z.object({
   shortcuts: z.array(ShortcutSchema), // Remove .min(1) constraint
   scrollBoxIdentifier: z.string(),
 	userId: z.string(),
+  targetCondition: z.string().optional()
 });
 
 // Define schema for Redis connection

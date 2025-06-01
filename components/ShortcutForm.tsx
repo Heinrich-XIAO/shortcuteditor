@@ -109,13 +109,27 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
                   </FormControl>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="scrollBoxIdentifier"
-              render={({ field }) => (
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="targetCondition"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Which elements should be included?</FormLabel>
+                    <FormControl>
+                      <Input placeholder="CSS selector for included elements" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="scrollBoxIdentifier"
+                render={({ field }) => (
                 <FormItem>
                   <FormLabel>Scroll Box Identifier</FormLabel>
                   <FormControl>
@@ -125,14 +139,14 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
                 </FormItem>
               )}
             />
-            
+
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <Label className="text-lg font-semibold">Shortcuts</Label>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm" 
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
                   onClick={addShortcut}
                   className="flex gap-1 items-center"
                 >
@@ -140,7 +154,7 @@ export function ShortcutForm({ initialData, onSubmit, onCancel }: ShortcutFormPr
                   <span>Add Shortcut</span>
                 </Button>
               </div>
-              
+
               <div className="space-y-4">
                 <DragDropContext onDragEnd={onDragEnd}>
                   <Droppable droppableId="shortcuts">

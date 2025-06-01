@@ -44,6 +44,7 @@ export function getDefaultShortcut(): WebSubURLShortcut {
     ],
     scrollBoxIdentifier: "",
     userId: "",
+    targetCondition: "",
   };
 }
 

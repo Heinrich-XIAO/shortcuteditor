@@ -17,6 +17,7 @@ export interface WebSubURLShortcut {
   shortcuts: Shortcut[];
   scrollBoxIdentifier: string;
 	userId: string;
+  targetCondition?: string;
 }
 
 export type ToastType = 'success' | 'error' | 'info';
